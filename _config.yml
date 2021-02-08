@@ -1,5 +1,5 @@
 theme: jekyll-theme-minimal
-title: 'Advanced Topics in Single Cell RNA-Seq'
+title: 'Advanced Topics in Single Cell RNA-Seq: VDJ'
 show_downloads: True
 google_analytics: True
 navigation:
@@ -24,7 +24,7 @@ navigation:
   - title: Scripts
     url: software_scripts/scripts_links
 
-- heading: Prerequisites
+  - heading: Prerequisites
   - title: CLI
     url: https://ucdavis-bioinformatics-training.github.io/2021-March-Introduction-to-the-Command-Line-for-Bioinformatics/
   - title: R
