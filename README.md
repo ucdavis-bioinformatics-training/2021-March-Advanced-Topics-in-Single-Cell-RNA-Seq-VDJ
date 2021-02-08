@@ -2,7 +2,7 @@ All documentation for the workshop is best viewed from the github.io pages
 
 [Documentation](https://ucdavis-bioinformatics-training.github.io/2021-March-Advanced-Topics-in-Single-Cell-RNA-Seq-VDJ/)
 
-Bioinformatics: Introduction to Single Cell RNA-Seq Analysis Workshop
+Advanced Topics in Single Cell RNA-Seq Analysis: VDJ
 
 Mar. 24, 2021, 9 a.m. - 5:00 p.m **Online learning**
 
