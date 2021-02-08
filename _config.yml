@@ -34,7 +34,7 @@ navigation:
   - title: Data Reduction
     url: VDJ/VDJ_reduction
   - title: Data Analysis
-    url: VDJ/VDJ_analysis_fixed
+    url: VDJ/VDJ_Analysis_fixed
 
   - heading: ETC
   - title: Closing thoughts
