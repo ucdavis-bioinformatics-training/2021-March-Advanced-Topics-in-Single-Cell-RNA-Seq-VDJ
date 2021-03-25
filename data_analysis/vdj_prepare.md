@@ -50,32 +50,8 @@ if (!any(rownames(installed.packages()) == "reshape2")){
   BiocManager::install("reshape2")
 }
 
-if (!any(rownames(installed.packages()) == "biomaRt")){
-  BiocManager::install("biomaRt")
-}
-
-if (!any(rownames(installed.packages()) == "org.Hs.eg.db")){
-  BiocManager::install("org.Hs.eg.db")
-}
-
-if (!any(rownames(installed.packages()) == "limma")){
-  BiocManager::install("limma")
-}
-
-if (!any(rownames(installed.packages()) == "topGO")){
-  BiocManager::install("topGO")
-}
-
-if (!any(rownames(installed.packages()) == "sva")){
-  BiocManager::install("sva")
-}
-
-if (!any(rownames(installed.packages()) == "scran")){
-  BiocManager::install("scran")
-}
-
-if (!any(rownames(installed.packages()) == "WGCNA")){
-  BiocManager::install("WGCNA")
+if (!any(rownames(installed.packages()) == "cowplot")){
+  BiocManager::install("cowplot")
 }
 
 ## All of thse should now load without error.
@@ -89,13 +65,7 @@ library(kableExtra)
 library(ggplot2)
 library(dplyr)
 library(reshape2)
-library(biomaRt)
-library(limma)
-library(topGO)
-library(org.Hs.eg.db)
-library(sva)
-library(scran)
-library(WGCNA)
+library(cowplot)
 
 sessionInfo()
 ```
