@@ -26,15 +26,17 @@ navigation:
 
   - heading: Prerequisites
   - title: CLI
-    url: https://ucdavis-bioinformatics-training.github.io/2021-March-Introduction-to-the-Command-Line-for-Bioinformatics/
+    url: base/cli_prerequisites
   - title: R
-    url: https://ucdavis-bioinformatics-training.github.io/2021-March-Introduction-to-R-for-Bioinformatics/
+    url: base/r_prerequisites
 
   - heading: VDJ
   - title: Data Reduction
-    url: VDJ/VDJ_reduction
+    url: data_reduction/VDJ_reduction
+  - title: Prepare Data analysis
+    url: data_analysis/vdj_prepare
   - title: Data Analysis
-    url: VDJ/VDJ_Analysis_fixed
+    url: data_analysis/VDJ_Analysis_fixed
 
   - heading: ETC
   - title: Closing thoughts

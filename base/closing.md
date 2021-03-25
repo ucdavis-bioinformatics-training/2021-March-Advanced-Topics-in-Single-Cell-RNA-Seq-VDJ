@@ -1,9 +1,5 @@
 # Closing Thoughts
 
-**The forest through the trees.**
-
-<img src="https://raw.githubusercontent.com/ucdavis-bioinformatics-training/ucdavis-bioinformatics-training.presentations/master/flowcharts/flowchart2.png" alt="flowchart2" width="600px"/>
-
 ## Be Consistent
 
 * Be Consistent
@@ -32,10 +28,11 @@ My recommendation is to follow all of the instructions again, from the beginning
 
 ##  Upcoming Workshops
 
-Check out our [upcoming course offerings](https://registration.genomecenter.ucdavis.edu/)!
+Continue pursuing single cell RNA-Seq analysis with one of our advanced topics single-day workshops, or explore another type of experiment with one of our other [offerings](https://registration.genomecenter.ucdavis.edu).
 
 ## Previous Workshops available online
 If you would like to take a look at the [documentation](https://ucdavis-bioinformatics-training.github.io/) from previous workshops.
+
 
 ## Questions?
 

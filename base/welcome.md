@@ -78,9 +78,4 @@ Workshop materials are all posted on github, and publicly available
 
 A portion of  this course will be conducted on our servers and compute cluster (tadpole.genomecenter.ucdavis.edu).
 
-Everyone should get an account.  
-[https://computing.genomecenter.ucdavis.edu](https://computing.genomecenter.ucdavis.edu)
-
-Request an account -> sponsor is "Bioinformatics Core Workshop"
-
 If you already have, or have had in the past, an account on our systems, then please tell us your username, or email, and we will add you to the workshop. **Do not create a new account**
