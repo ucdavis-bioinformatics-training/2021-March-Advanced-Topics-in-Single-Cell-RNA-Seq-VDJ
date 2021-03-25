@@ -18,6 +18,10 @@ library(knitr)
 library(kableExtra)
 library(cowplot)
 library(dplyr)
+library(circlize)
+library(scales)
+library(scRepertoire)
+
 ```
 
 ## Load the Expression Matrix Data and create the combined base Seurat object.
@@ -363,8 +367,6 @@ occupiedscRepertoire(experiment.aggregate, x.axis = "cluster")
 
 
 ```{r circos}
-library(circlize)
-library(scales)
 
 circles <- getCirclize(experiment.aggregate, cloneCall = "gene+nt", groupBy = "orig.ident" )
 
