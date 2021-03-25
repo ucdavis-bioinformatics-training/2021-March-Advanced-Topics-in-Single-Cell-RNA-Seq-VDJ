@@ -56,7 +56,7 @@ add_clonotype <- function(tcr_prefix, seurat_obj, type="t"){
     # as each entry for given barcode will have same clonotype.
     tcr <- tcr[!duplicated(tcr$barcode), ]
 
-    # Only keep the barcode and clonotype columns. 
+    # Only keep the barcode and clonotype columns.
     # We'll get additional clonotype info from the clonotype table.
     tcr <- tcr[,c("barcode", "raw_clonotype_id")]
     names(tcr)[names(tcr) == "raw_clonotype_id"] <- "clonotype_id"
@@ -122,8 +122,8 @@ s_balbc_pbmc <- subset(s_balbc_pbmc, cells = colnames(s_balbc_pbmc)[!(!is.na(s_b
 s_balbc_pbmc
 ```
 
-<div class='r_output'> An object of class Seurat 
- 15975 features across 7737 samples within 1 assay 
+<div class='r_output'> An object of class Seurat
+ 15975 features across 7737 samples within 1 assay
  Active assay: RNA (15975 features, 0 variable features)
 </div>
 ### Lets take a look at some other metadata
@@ -188,8 +188,8 @@ s_balbc_pbmc <- subset(s_balbc_pbmc, nCount_RNA >= 500 & nCount_RNA <= 40000)
 s_balbc_pbmc
 ```
 
-<div class='r_output'> An object of class Seurat 
- 15975 features across 7634 samples within 1 assay 
+<div class='r_output'> An object of class Seurat
+ 15975 features across 7634 samples within 1 assay
  Active assay: RNA (15975 features, 0 variable features)
 </div>
 
@@ -208,40 +208,40 @@ s_balbc_pbmc <- ScaleData(s_balbc_pbmc, features = all.genes)
 s_balbc_pbmc <- RunPCA(s_balbc_pbmc, features = VariableFeatures(object = s_balbc_pbmc))
 ```
 
-<div class='r_output'> PC_ 1 
- Positive:  Ighm, Igkc, Mzb1, H2-Eb1, H2-Aa, Cd74, H2-Ab1, Trbc2, Ms4a4b, Cd72 
- 	   Gm30211, Tcf7, Vpreb3, Il7r, Ly6d, Hmgb2, Thy1, Iglc1, Ass1, Rrad 
- 	   Dapl1, AW112010, Trbc1, Cd8b1, Sh2d1a, Itm2a, Hs3st1, Fam129c, Ctsw, Gata3 
- Negative:  Fn1, Emilin2, Lyz2, Cxcl2, App, Fcgr3, Ccl6, Sdc3, Wfdc17, Itgam 
- 	   Ltc4s, Lrp1, Alox5ap, Mt1, Csf1r, Cd14, Cxcl1, Ptgs1, Ifitm3, Ier3 
- 	   Plxdc2, Ccl9, Ccl24, Cfp, Trf, Fgfr1, Ednrb, S100a1, Ifitm2, Gda 
- PC_ 2 
- Positive:  Prg4, Cd5l, Alox15, Ptgis, Selp, Ltbp1, Saa3, Garnl3, Pmp22, C1qc 
- 	   C1qa, C1qb, Ednrb, C4b, Tgfb2, Fcna, Icam2, Itga6, Adgre1, Serpinb2 
- 	   Gm16104, Bcam, Serpine1, Flnb, Timd4, Padi4, F10, Gm10369, Gata6, Emilin1 
- Negative:  Il1b, Lst1, Gm5150, Sirpb1c, Ltb4r1, Ccr2, Cd300c2, Clec4a2, Csf3r, S100a9 
- 	   Mmp9, Fam129a, Hp, Il1r2, Cxcr2, S100a8, Cass4, Clec4b1, Plbd1, Clec4a3 
- 	   Fgr, Jaml, Ptafr, Msrb1, Tmem176b, Cd300lf, Clec4a1, Tnip3, Gcnt2, Bcl2a1a 
- PC_ 3 
- Positive:  S100a9, S100a8, Csf3r, Cxcr2, Hdc, Hp, Retnlg, Il1r2, Cd33, Gcnt2 
- 	   Slfn4, Mmp9, Slfn1, Tnfaip2, Trem1, Arg2, Slc40a1, Lst1, Trem3, Cd300lf 
- 	   F630028O10Rik, Pygl, Ccr1, Lrg1, Selplg, Clec4d, Stfa2l1, Rnf149, Ifitm1, Gm5150 
- Negative:  Cd74, H2-Eb1, H2-Aa, H2-Ab1, Slamf9, Crip1, Rassf4, Capg, Ighm, Pld4 
- 	   Plac8, Mrc1, Mzb1, Clec4b1, Tubb6, Tnip3, Ctss, Fcrls, Tmem176b, Ahnak 
- 	   Tmem176a, Igkc, S100a4, Tppp3, Zbtb32, Ctsz, Ccr2, Cysltr1, Hopx, Batf3 
- PC_ 4 
- Positive:  Cd74, Ighm, H2-Aa, Igkc, H2-Eb1, Mzb1, H2-Ab1, Plac8, Iglc1, Aldh2 
- 	   Ly6e, Capg, Cst3, Cyp4f18, Gm30211, Ctsz, Ly6d, Spi1, S100a6, Zbtb32 
- 	   Ctss, Cyba, Rassf4, Plaur, Pld4, Ncf4, Sox5, Atf3, Vpreb3, S100a8 
- Negative:  Ms4a4b, Trbc2, Thy1, Tcf7, Il7r, Dok2, Fxyd5, Ctsw, Nkg7, Rgs10 
- 	   Il2rb, Npc2, Selplg, AW112010, Klk8, Sh2d1a, Id2, Trbc1, Ccl5, Ramp1 
- 	   Cd7, Ccr2, Cd8b1, Gata3, Klrd1, Lcp2, Ppp1r15a, Dapl1, Igfbp4, Cd226 
- PC_ 5 
- Positive:  Pclaf, Birc5, Mki67, Spc24, Cdk1, Cdca3, Ube2c, Nusap1, Ccna2, Cenpm 
- 	   Tpx2, Ccnb2, Rrm2, Pbk, Tyms, Cdca8, Cenpf, Ckap2l, Kif11, Tk1 
- 	   Clspn, Uhrf1, Top2a, Esco2, Bub1, Kif15, Cks1b, Shcbp1, Bub1b, Prc1 
- Negative:  Pid1, Krt80, Lyz1, Retnla, Clec4a1, Ifitm6, Ccr2, Gm21188, Gm36161, Plcb1 
- 	   Abca9, Kazald1, Tmem176b, Tmem176a, Pltp, Il6, Gm41307, Kank3, Clec4a3, Fcrls 
+<div class='r_output'> PC_ 1
+ Positive:  Ighm, Igkc, Mzb1, H2-Eb1, H2-Aa, Cd74, H2-Ab1, Trbc2, Ms4a4b, Cd72
+ 	   Gm30211, Tcf7, Vpreb3, Il7r, Ly6d, Hmgb2, Thy1, Iglc1, Ass1, Rrad
+ 	   Dapl1, AW112010, Trbc1, Cd8b1, Sh2d1a, Itm2a, Hs3st1, Fam129c, Ctsw, Gata3
+ Negative:  Fn1, Emilin2, Lyz2, Cxcl2, App, Fcgr3, Ccl6, Sdc3, Wfdc17, Itgam
+ 	   Ltc4s, Lrp1, Alox5ap, Mt1, Csf1r, Cd14, Cxcl1, Ptgs1, Ifitm3, Ier3
+ 	   Plxdc2, Ccl9, Ccl24, Cfp, Trf, Fgfr1, Ednrb, S100a1, Ifitm2, Gda
+ PC_ 2
+ Positive:  Prg4, Cd5l, Alox15, Ptgis, Selp, Ltbp1, Saa3, Garnl3, Pmp22, C1qc
+ 	   C1qa, C1qb, Ednrb, C4b, Tgfb2, Fcna, Icam2, Itga6, Adgre1, Serpinb2
+ 	   Gm16104, Bcam, Serpine1, Flnb, Timd4, Padi4, F10, Gm10369, Gata6, Emilin1
+ Negative:  Il1b, Lst1, Gm5150, Sirpb1c, Ltb4r1, Ccr2, Cd300c2, Clec4a2, Csf3r, S100a9
+ 	   Mmp9, Fam129a, Hp, Il1r2, Cxcr2, S100a8, Cass4, Clec4b1, Plbd1, Clec4a3
+ 	   Fgr, Jaml, Ptafr, Msrb1, Tmem176b, Cd300lf, Clec4a1, Tnip3, Gcnt2, Bcl2a1a
+ PC_ 3
+ Positive:  S100a9, S100a8, Csf3r, Cxcr2, Hdc, Hp, Retnlg, Il1r2, Cd33, Gcnt2
+ 	   Slfn4, Mmp9, Slfn1, Tnfaip2, Trem1, Arg2, Slc40a1, Lst1, Trem3, Cd300lf
+ 	   F630028O10Rik, Pygl, Ccr1, Lrg1, Selplg, Clec4d, Stfa2l1, Rnf149, Ifitm1, Gm5150
+ Negative:  Cd74, H2-Eb1, H2-Aa, H2-Ab1, Slamf9, Crip1, Rassf4, Capg, Ighm, Pld4
+ 	   Plac8, Mrc1, Mzb1, Clec4b1, Tubb6, Tnip3, Ctss, Fcrls, Tmem176b, Ahnak
+ 	   Tmem176a, Igkc, S100a4, Tppp3, Zbtb32, Ctsz, Ccr2, Cysltr1, Hopx, Batf3
+ PC_ 4
+ Positive:  Cd74, Ighm, H2-Aa, Igkc, H2-Eb1, Mzb1, H2-Ab1, Plac8, Iglc1, Aldh2
+ 	   Ly6e, Capg, Cst3, Cyp4f18, Gm30211, Ctsz, Ly6d, Spi1, S100a6, Zbtb32
+ 	   Ctss, Cyba, Rassf4, Plaur, Pld4, Ncf4, Sox5, Atf3, Vpreb3, S100a8
+ Negative:  Ms4a4b, Trbc2, Thy1, Tcf7, Il7r, Dok2, Fxyd5, Ctsw, Nkg7, Rgs10
+ 	   Il2rb, Npc2, Selplg, AW112010, Klk8, Sh2d1a, Id2, Trbc1, Ccl5, Ramp1
+ 	   Cd7, Ccr2, Cd8b1, Gata3, Klrd1, Lcp2, Ppp1r15a, Dapl1, Igfbp4, Cd226
+ PC_ 5
+ Positive:  Pclaf, Birc5, Mki67, Spc24, Cdk1, Cdca3, Ube2c, Nusap1, Ccna2, Cenpm
+ 	   Tpx2, Ccnb2, Rrm2, Pbk, Tyms, Cdca8, Cenpf, Ckap2l, Kif11, Tk1
+ 	   Clspn, Uhrf1, Top2a, Esco2, Bub1, Kif15, Cks1b, Shcbp1, Bub1b, Prc1
+ Negative:  Pid1, Krt80, Lyz1, Retnla, Clec4a1, Ifitm6, Ccr2, Gm21188, Gm36161, Plcb1
+ 	   Abca9, Kazald1, Tmem176b, Tmem176a, Pltp, Il6, Gm41307, Kank3, Clec4a3, Fcrls
  	   Ltb4r1, Clec4b1, Ccl9, Mrc1, Ms4a8a, Ecm1, Mcub, Tifab, Dapk1, Fcgrt
 </div>
 ```r
@@ -258,10 +258,10 @@ s_balbc_pbmc <- FindClusters(s_balbc_pbmc, resolution = c(0.5))
 ```
 
 <div class='r_output'> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
- 
+
  Number of nodes: 7634
  Number of edges: 332010
- 
+
  Running Louvain algorithm...
  Maximum modularity in 10 random starts: 0.9037
  Number of communities: 15
@@ -319,7 +319,7 @@ table(!is.na(s_balbc_pbmc$t_clonotype_id),s_balbc_pbmc$seurat_clusters)
             0    1    2    3    4    5    6    7    8    9   10   11   12   13
    FALSE 1678   82 1174  807  656   47   37  326  176  149  132  125   44   35
    TRUE     1 1337    0    0    0  455  312    6    9    5    2    8   13    6
-        
+
            14
    FALSE    1
    TRUE    11
@@ -344,7 +344,7 @@ table(!is.na(s_balbc_pbmc$t_clonotype_id),s_balbc_pbmc$seurat_clusters)
             0    1    2    3    4    5    6    7    8    9   10   11   12   13
    FALSE 1678   82 1174  807  656   47   37  326  176  149  132  125   44   35
    TRUE     1 1337    0    0    0  455  312    6    9    5    2    8   13    6
-        
+
            14
    FALSE    1
    TRUE    11
@@ -370,7 +370,7 @@ table(!is.na(s_balbc_pbmc$b_clonotype_id),s_balbc_pbmc$seurat_clusters)
             0    1    2    3    4    5    6    7    8    9   10   11   12   13
    FALSE   21 1417    1    4    2  501  347  306  161  138  122  116   21    7
    TRUE  1658    2 1173  803  654    1    2   26   24   16   12   17   36   34
-        
+
            14
    FALSE   12
    TRUE     0
@@ -382,8 +382,8 @@ b_cells <- c("0","2","3","4","12","13")
 
 ```r
 markers_all = FindAllMarkers(s_balbc_pbmc,genes.use = VariableFeatures(s_balbc_pbmc),
-    only.pos = TRUE, 
-    min.pct = 0.25, 
+    only.pos = TRUE,
+    min.pct = 0.25,
     thresh.use = 0.25)
 ```
 
@@ -395,7 +395,7 @@ markers_all = FindAllMarkers(s_balbc_pbmc,genes.use = VariableFeatures(s_balbc_p
  install.packages('BiocManager')
  BiocManager::install('limma')
  --------------------------------------------
- After installation of limma, Seurat will automatically use the more 
+ After installation of limma, Seurat will automatically use the more
  efficient implementation (no further action necessary).
  This message will be shown once per session
 </div>
@@ -449,8 +449,8 @@ head(markers_all)
 table(table(markers_all$gene))
 ```
 
-<div class='r_output'> 
-    1    2    3    4    5    6    7    8 
+<div class='r_output'>
+    1    2    3    4    5    6    7    8
  1580  690  467  271  108   23    5    5
 </div>
 ```r
@@ -465,16 +465,16 @@ dim(markers_all_single)
 table(table(markers_all_single$gene))
 ```
 
-<div class='r_output'> 
-    1 
+<div class='r_output'>
+    1
  1580
 </div>
 ```r
 table(markers_all_single$cluster)
 ```
 
-<div class='r_output'> 
-   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14 
+<div class='r_output'>
+   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14
   16  26  42 150  13  26  28 266 107 117 154 126 321  21 167
 </div>
 ```r
@@ -495,15 +495,15 @@ Plot a heatmap of genes by cluster for the top 5 marker genes per cluster
 library(dplyr)
 ```
 
-<div class='r_output'> 
+<div class='r_output'>
  Attaching package: 'dplyr'
 </div>
 <div class='r_output'> The following objects are masked from 'package:stats':
- 
+
      filter, lag
 </div>
 <div class='r_output'> The following objects are masked from 'package:base':
- 
+
      intersect, setdiff, setequal, union
 </div>
 ```r
@@ -515,9 +515,9 @@ dim(top5)
 </div>
 ```r
 DoHeatmap(
-    object = s_balbc_pbmc, 
+    object = s_balbc_pbmc,
     features = top5$gene
-) 
+)
 ```
 
 ![](VDJ_Analysis_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
@@ -538,20 +538,20 @@ sessionInfo()
 <div class='r_output'> R version 4.0.0 (2020-04-24)
  Platform: x86_64-apple-darwin17.0 (64-bit)
  Running under: macOS Catalina 10.15.4
- 
+
  Matrix products: default
  BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
  LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
- 
+
  locale:
  [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
- 
+
  attached base packages:
  [1] stats     graphics  grDevices datasets  utils     methods   base     
- 
+
  other attached packages:
- [1] dplyr_0.8.5   cowplot_1.0.0 Seurat_3.1.5 
- 
+ [1] dplyr_0.8.5   cowplot_1.0.0 Seurat_3.1.5
+
  loaded via a namespace (and not attached):
   [1] httr_1.4.1         tidyr_1.1.0        bit64_0.9-7        hdf5r_1.3.2       
   [5] jsonlite_1.6.1     viridisLite_0.3.0  splines_4.0.0      leiden_0.3.3      
@@ -568,11 +568,11 @@ sessionInfo()
  [49] tools_4.0.0        fitdistrplus_1.1-1 data.table_1.12.8  lifecycle_0.2.0   
  [53] stringr_1.4.0      plotly_4.9.2.1     munsell_0.5.0      cluster_2.1.0     
  [57] irlba_2.3.3        compiler_4.0.0     rsvd_1.0.3         rlang_0.4.6       
- [61] grid_4.0.0         ggridges_0.5.2     RcppAnnoy_0.0.16   htmlwidgets_1.5.1 
+ [61] grid_4.0.0         ggridges_0.5.2     RcppAnnoy_0.0.16   htmlwidgets_1.5.1
  [65] igraph_1.2.5       labeling_0.3       rmarkdown_2.1      gtable_0.3.0      
  [69] codetools_0.2-16   reshape2_1.4.4     R6_2.4.1           gridExtra_2.3     
  [73] zoo_1.8-8          knitr_1.28         bit_1.1-15.2       uwot_0.1.8        
  [77] future.apply_1.5.0 KernSmooth_2.23-17 ape_5.3            stringi_1.4.6     
- [81] parallel_4.0.0     Rcpp_1.0.4.6       vctrs_0.3.0        sctransform_0.2.1 
+ [81] parallel_4.0.0     Rcpp_1.0.4.6       vctrs_0.3.0        sctransform_0.2.1
  [85] png_0.1-7          tidyselect_1.1.0   xfun_0.14          lmtest_0.9-37
 </div>
