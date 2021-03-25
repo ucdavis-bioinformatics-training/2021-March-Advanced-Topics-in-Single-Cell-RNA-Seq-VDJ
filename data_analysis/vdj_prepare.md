@@ -54,6 +54,14 @@ if (!any(rownames(installed.packages()) == "cowplot")){
   BiocManager::install("cowplot")
 }
 
+if (!any(rownames(installed.packages()) == "devtools")){
+  BiocManager::install("devtools")
+}
+
+if (!any(rownames(installed.packages()) == "scRepertoire")){
+  devtools::install_github("ncborcherding/scRepertoire")
+}
+
 ## All of thse should now load without error.
 
 library(rmarkdown)
@@ -66,6 +74,7 @@ library(ggplot2)
 library(dplyr)
 library(reshape2)
 library(cowplot)
+library(scRepertoire)
 
 sessionInfo()
 ```
