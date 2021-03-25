@@ -1,6 +1,6 @@
 ---
-title: "Single Cell VDJ Analysis"
-author: "Bioinformatics Core"
+title: "Advanced Single Cell VDJ Analysis"
+author: "UCD Bioinformatics Core"
 output:
     html_document:
       keep_md: TRUE
@@ -51,7 +51,7 @@ add_clonotype <- function(tcr_prefix, seurat_obj, type="t"){
     # as each entry for given barcode will have same clonotype.
     tcr <- tcr[!duplicated(tcr$barcode), ]
 
-    # Only keep the barcode and clonotype columns. 
+    # Only keep the barcode and clonotype columns.
     # We'll get additional clonotype info from the clonotype table.
     tcr <- tcr[,c("barcode", "raw_clonotype_id")]
     names(tcr)[names(tcr) == "raw_clonotype_id"] <- "clonotype_id"
@@ -158,8 +158,8 @@ b_cells <- c("0","2","3","4","12","13")
 
 ```{r}
 markers_all = FindAllMarkers(s_balbc_pbmc,genes.use = VariableFeatures(s_balbc_pbmc),
-    only.pos = TRUE, 
-    min.pct = 0.25, 
+    only.pos = TRUE,
+    min.pct = 0.25,
     thresh.use = 0.25)
 
 dim(markers_all)
@@ -182,9 +182,9 @@ library(dplyr)
 top5 <- markers_all_single %>% group_by(cluster) %>% top_n(5, avg_logFC)
 dim(top5)
 DoHeatmap(
-    object = s_balbc_pbmc, 
+    object = s_balbc_pbmc,
     features = top5$gene
-) 
+)
 ```
 
 ## Finally, save the object
@@ -197,4 +197,3 @@ save(s_balbc_pbmc,file="VDJ_object.RData")
 ```{r}
 sessionInfo()
 ```
-

@@ -32,7 +32,7 @@ navigation:
 
   - heading: VDJ
   - title: Data Reduction
-    url: data_reduction/VDJ_reduction
+    url: data_reduction/VDJ
   - title: Prepare Data analysis
     url: data_analysis/vdj_prepare
   - title: Data Analysis

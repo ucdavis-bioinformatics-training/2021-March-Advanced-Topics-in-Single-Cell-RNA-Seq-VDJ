@@ -100,11 +100,11 @@ library(WGCNA)
 sessionInfo()
 ```
 
-### Download the template Markdown workshop document PART1 and open it.
+### Download the template Markdown workshop document VDJ and open it.
 
 In the R console run the following command to download part 1 of data analysis
 ```r
-download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2021-March-Single-Cell-RNA-Seq-Analysis/master/data_analysis/scRNA_Workshop-PART1.Rmd", "scRNA_Workshop-PART1.Rmd")
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2021-March-Advanced-Topics-in-Single-Cell-RNA-Seq-VDJ/main/data_analysis/VDJ_Analysis.Rmd", "VDJ_Analysis.Rmd")
 ```
 
 ### Download the data for the workshop, extract it.
@@ -113,8 +113,8 @@ In the R console run the following command to download and extract the dataset (
 
 ```r
 options(timeout=1200)
-download.file("https://bioshare.bioinformatics.ucdavis.edu/bioshare/download/4vn7r610cf5d5dv/intro2singlecell_March2021.zip", "intro2singlecell_March2021.zip")
-system("unzip intro2singlecell_March2021.zip") # works in Linux and Mac, not sure about Windows"
+download.file("https://bioshare.bioinformatics.ucdavis.edu/bioshare/download/4vn7r610cf5d5dv/advsinglecellvdj_March2021.zip", "advsinglecellvdj_March2021.zip")
+system("unzip advsinglecellvdj_March2021.zip") # works in Linux and Mac, not sure about Windows"
 ```
 
 If you timed out on the download, increase 1200 to something higher. If the system command didn't work to extract the zip file, navigate to the folder you downloaded the data in and manually unzip the archive file
@@ -126,7 +126,7 @@ If you timed out on the download, increase 1200 to something higher. If the syst
 The top YAML (YAML ain't markup language) portion of the doc tells RStudio how to parse the document.
 
 <pre><code>---
-title: "Introduction to Single Cell RNAseq Part 1"
+title: "Single Cell VDJ Analysis"
 author: your_name
 date: current_date
 output:
