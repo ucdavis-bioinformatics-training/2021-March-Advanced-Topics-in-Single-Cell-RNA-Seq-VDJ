@@ -1,6 +1,6 @@
 ---
-title: "Single Cell VDJ Analysis"
-author: "Bioinformatics Core"
+title: "Advanced Single Cell VDJ Analysis"
+author: "UCD Bioinformatics Core"
 output:
     html_document:
       keep_md: TRUE
@@ -13,185 +13,387 @@ output:
 We start with loading needed libraries for R
 ```{r, warning=FALSE,error=FALSE,message=FALSE}
 library(Seurat)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
 library(cowplot)
+library(dplyr)
 ```
 
-## First Downlaod Example Data
-```{r eval=FALSE}
-download.file("https://bioshare.bioinformatics.ucdavis.edu/bioshare/download/iimg5mz77whzzqc/vdj_v1_mm_balbc_pbmc.zip", "vdj_v1_mm_balbc_pbmc.zip")
-```
 ## Load the Expression Matrix Data and create the combined base Seurat object.
 
 Seurat provides a function `Read10X` to read in 10X data folder. First we read in data from each individual sample folder. Then, we initialize the Seurat object (`CreateSeuratObject`) with the raw (non-normalized data). Keep all genes expressed in >= 3 cells. Keep all cells with at least 200 detected genes. Also extracting sample names, calculating and adding in the metadata mitochondrial percentage of each cell. Some QA/QC Finally, saving the raw Seurat object.
 
-```{r}
-## Cellranger
-balbc_pbmc <- Read10X_h5("vdj_v1_mm_balbc_pbmc/vdj_v1_mm_balbc_pbmc_5gex_filtered_feature_bc_matrix.h5")
 
-s_balbc_pbmc <- CreateSeuratObject(counts = balbc_pbmc, min.cells = 3, min.features = 200, project = "cellranger")
+### Setup the experiment folder and data info
+```{r exp_setup, warning=FALSE,error=FALSE, message=FALSE}
+experiment_name = "Covid VDJ Example"
+dataset_loc <- "./advsinglecellvdj_March2021"
+ids <- c("T021PBMC", "T022PBMC")
 ```
 
-### The percentage of reads that map to the mitochondrial genome
+###1. Load the Cell Ranger Matrix Data (hdf5 file) and create the base Seurat object.
+```{r load_data_hdf5, warning=FALSE,error=FALSE, message=FALSE}
+d10x.data <- lapply(ids, function(i){
+  d10x <- Read10X_h5(file.path(dataset_loc,paste0(i,"_Counts/outs"),"raw_feature_bc_matrix.h5"))
+  colnames(d10x) <- paste(sapply(strsplit(colnames(d10x),split="-"),'[[',1L),i,sep="-")
+  d10x
+})
+names(d10x.data) <- ids
+```
 
-* Low-quality / dying cells often exhibit extensive mitochondrial content
+###2. Create the Seurat object
+
+filter criteria: remove genes that do not occur in a minimum of 0 cells and remove cells that don't have a minimum of 200 features
+
+```{r create_seurat_object, warning=FALSE,error=FALSE, message=FALSE}
+experiment.data <- do.call("cbind", d10x.data)
+
+experiment.aggregate <- CreateSeuratObject(
+  experiment.data,
+  project = experiment_name,
+  min.cells = 0,
+  min.features = 300,
+  names.field = 2,
+  names.delim = "\\-")
+
+experiment.aggregate
+```
+
+
+###3. The percentage of reads that map to the mitochondrial genome
+
+* Low-quality / dying cells often exhibit extensive mitochondrial contamination.
 * We calculate mitochondrial QC metrics with the PercentageFeatureSet function, which calculates the percentage of counts originating from a set of features.
 * We use the set of all genes, in mouse these genes can be identified as those that begin with 'mt', in human data they begin with MT.
 
-```{r}
-s_balbc_pbmc$percent.mito <- PercentageFeatureSet(s_balbc_pbmc, pattern = "^mt-")
+```{r explore, warning=FALSE,error=FALSE, message=FALSE}
+experiment.aggregate$percent.mito <- PercentageFeatureSet(experiment.aggregate, pattern = "^MT-")
+summary(experiment.aggregate$percent.mito)
 ```
 
-## Next lets add the T cell and B cell clonetype information
-```{r}
-add_clonotype <- function(tcr_prefix, seurat_obj, type="t"){
-    tcr <- read.csv(paste(tcr_prefix,"filtered_contig_annotations.csv", sep=""))
-
-    # Remove the -1 at the end of each barcode.
-    # Subsets so only the first line of each barcode is kept,
-    # as each entry for given barcode will have same clonotype.
-    tcr <- tcr[!duplicated(tcr$barcode), ]
-
-    # Only keep the barcode and clonotype columns. 
-    # We'll get additional clonotype info from the clonotype table.
-    tcr <- tcr[,c("barcode", "raw_clonotype_id")]
-    names(tcr)[names(tcr) == "raw_clonotype_id"] <- "clonotype_id"
-
-    # Clonotype-centric info.
-    clono <- read.csv(paste(tcr_prefix,"clonotypes.csv", sep=""))
-
-    # Slap the AA sequences onto our original table by clonotype_id.
-    tcr <- merge(tcr, clono[, c("clonotype_id", "cdr3s_aa")])
-    names(tcr)[names(tcr) == "cdr3s_aa"] <- "cdr3s_aa"
-
-    # Reorder so barcodes are first column and set them as rownames.
-    tcr <- tcr[, c(2,1,3)]
-    rownames(tcr) <- tcr[,1]
-    tcr[,1] <- NULL
-    colnames(tcr) <- paste(type, colnames(tcr), sep="_")
-    # Add to the Seurat object's metadata.
-    clono_seurat <- AddMetaData(object=seurat_obj, metadata=tcr)
-    return(clono_seurat)
+###4. QA/QC and filtering
+```{r custom_vln}
+# Custom violinplot code
+violin_custom <- function(object, var, pt.size = 0.1, pt.alpha = 0.1, log = F){
+	p <- ggplot(object[[]], aes(y = !!sym(var), x = orig.ident, fill = orig.ident)) + 
+	geom_violin(scale = "width", width = 0.9) + 
+	geom_point(position = position_jitterdodge(dodge.width = 0.9, jitter.width = 1.4), 
+		size = pt.size, alpha = pt.alpha) + 
+	labs(fill = NULL, x = "Identity", y = NULL, title = var) + 	
+	cowplot::theme_cowplot() + 
+	theme(axis.text.x = element_text(angle = 45, hjust = 1), plot.title = element_text(hjust = 0.5))
+	if (log){
+		p <- p + scale_y_continuous(trans = "log10")
+	}
+	return(p)
 }
-
-s_balbc_pbmc <- add_clonotype("vdj_v1_mm_balbc_pbmc/vdj_v1_mm_balbc_pbmc_t_", s_balbc_pbmc, "t")
-s_balbc_pbmc <- add_clonotype("vdj_v1_mm_balbc_pbmc/vdj_v1_mm_balbc_pbmc_b_", s_balbc_pbmc, "b")
-head(s_balbc_pbmc[[]])
 ```
 
-### Are there any T/B cells out there??
-```{r}
-table(!is.na(s_balbc_pbmc$t_clonotype_id),!is.na(s_balbc_pbmc$b_clonotype_id))
-s_balbc_pbmc <- subset(s_balbc_pbmc, cells = colnames(s_balbc_pbmc)[!(!is.na(s_balbc_pbmc$t_clonotype_id) &
-                                 !is.na(s_balbc_pbmc$b_clonotype_id))])
-s_balbc_pbmc
+#### Violin plot of genes/cell by sample:
+```{r vln_genes, fig.cap = "Violin Plot of Genes/Cell by Sample", fig.align = "center"}
+var <- "nFeature_RNA"
+violin_custom(experiment.aggregate, var)
 ```
 
-### Lets take a look at some other metadata
-
-```{r}
-RidgePlot(s_balbc_pbmc, features="nCount_RNA")
-RidgePlot(s_balbc_pbmc, features="nFeature_RNA")
-RidgePlot(s_balbc_pbmc, features="percent.mito")
+#### Violin plot of nUMI by sample:
+```{r vln_umi, fig.cap = "Violin Plot of UMI Count by Sample", fig.align = "center"}
+var <- "nCount_RNA"
+violin_custom(experiment.aggregate, var, log=T) # Try Log = T
 ```
 
-
-```{r fig.height=8}
-VlnPlot(
-  s_balbc_pbmc,
-  features = c("nFeature_RNA", "nCount_RNA","percent.mito"),
-  ncol = 1, pt.size = 0.3)
+#### Violin plot of percent mitochondrial gene expression by sample:
+```{r vln_mito, fig.cap = "Violin Plot of Percent Mitochondrial Gene Expression by Sample", fig.align = "center"}
+var <- "percent.mito"
+violin_custom(experiment.aggregate, var, log=T)
 ```
 
+### Cell filtering
+
+We use the information above to filter out cells. Here we choose those that have percent mitochondrial genes max of 8%, unique UMI counts under 3,000 or greater than 12,000 and contain at least 1000 features within them.
 
 ```{r}
-FeatureScatter(s_balbc_pbmc, feature1 = "nCount_RNA", feature2 = "percent.mito")
-FeatureScatter(s_balbc_pbmc, "nCount_RNA", "nFeature_RNA",pt.size = 0.5)
+table(experiment.aggregate$orig.ident)
+
+experiment.aggregate <- subset(experiment.aggregate, percent.mito <= 8)
+
+experiment.aggregate <- subset(experiment.aggregate, nCount_RNA >= 3000 & nCount_RNA <= 12000)
+
+experiment.aggregate <- subset(experiment.aggregate, nFeature_RNA >= 1000)
+
+experiment.aggregate
+
+table(experiment.aggregate$orig.ident)
+```
+
+**Qusetion** How does this filter relate to the cell ranger filtered result?
+
+
+###5. Normalize the data
+
+After filtering out cells from the dataset, the next step is to normalize the data. By default, we employ a global-scaling normalization method LogNormalize that normalizes the gene expression measurements for each cell by the total expression, multiplies this by a scale factor (10,000 by default), and then log-transforms the data.
+
+```{r normalize, warning=FALSE,error=FALSE,message=FALSE}
+experiment.aggregate <- NormalizeData(
+  object = experiment.aggregate,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000)
+```
+
+###6. Cell Cycle Calculation. Calculate Cell-Cycle with Seurat, the list of genes comes with Seurat (only for human)
+[Dissecting the multicellular ecosystem of metastatic melanoma by single-cell RNA-seq](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4944528/)
+
+```{r cellcycle, warning=FALSE,error=FALSE,message=FALSE}
+s.genes <- (cc.genes$s.genes)
+g2m.genes <- (cc.genes$g2m.genes)
+
+# Create our Seurat object and complete the initialization steps
+experiment.aggregate <- CellCycleScoring(experiment.aggregate, s.features = s.genes, g2m.features = g2m.genes, set.ident = FALSE)
+```
+
+#### Table of cell cycle (seurate)
+
+```{r cellcycle_table, warning=FALSE,error=FALSE,message=FALSE}
+table(experiment.aggregate$Phase) %>% kable(caption = "Number of Cells in each Cell Cycle Stage", col.names = c("Stage", "Count"), align = "c") %>% kable_styling()
+```
+###7. Identify variable genes, or just reduce the genes down **EXPERIMENTAL CODE**
+
+The function FindVariableFeatures identifies the most "highly variable genes" (default 2000 genes) by fitting a line to the relationship of log(variance) and log(mean) using loess smoothing, uses this information to standardize the data, then calculates the variance of the standardized data. We aren't so sure about this part so instead lets set veriable genes based on expression
+
+Here we will filter low-expressed genes (min reads 2) in few cells (min cells 20), remove any row (gene) whose value (for the row) is less than the cutoff. 
+```{r find_variablefeatures, warning=FALSE,error=FALSE, message=FALSE}
+dim(experiment.aggregate)
+
+min.value = 3
+min.cells = 50
+num.cells <- Matrix::rowSums(GetAssayData(experiment.aggregate, slot = "count") > min.value)
+genes.use <- names(num.cells[which(num.cells >= min.cells)])
+length(genes.use)
+
+VariableFeatures(experiment.aggregate) <- genes.use
+```
+
+
+
+###8. Scale the data
+
+ScaleData - Scales and centers genes in the dataset. If variables are provided in vars.to.regress, they are individually regressed against each gene, and the resulting residuals are then scaled and centered unless otherwise specified. Here we regress out cell cycle results S.Score and G2M.Score, percentage mitochondria (percent.mito) and the number of features (nFeature_RNA).
+
+```{r scale_data, warning=FALSE,error=FALSE,message=FALSE}
+#experiment.aggregate <- ScaleData(
+#  object = experiment.aggregate,
+#  vars.to.regress = c("S.Score", "G2M.Score", "percent.mito", "nFeature_RNA"))
+
+#for speed
+experiment.aggregate <- ScaleData(
+  object = experiment.aggregate)
+
+```
+
+
+###9. Dimensionality reduction with PCA
+
+Next we perform PCA (principal components analysis) on the scaled data.  
+
+```{r pca, warning=FALSE,error=FALSE,message=FALSE}
+experiment.aggregate <- RunPCA(object = experiment.aggregate, npcs = 100)
+```
+
+####  Principal components plot
+
+```{r plot_pca, warning=FALSE,error=FALSE,message=FALSE}
+DimPlot(object = experiment.aggregate, reduction = "pca")
+```
+
+#### Run Jackstraw alg, **takes a few hours to run** so skipping
+```{r jackstraw, warning=FALSE,error=FALSE,message=FALSE, eval=FALSE}
+experiment.aggregate <- JackStraw(object = experiment.aggregate, dims = 100)
+```
+
+#### Plot Jackstraw results
+```{r plot_jackstraw, warning=FALSE,error=FALSE,message=FALSE, fig.width=10, fig.height=10, warning=FALSE, eval=FALSE}
+experiment.aggregate <- ScoreJackStraw(experiment.aggregate, dims = 1:100)
+JackStrawPlot(object = experiment.aggregate, dims = 1:100)
+```
+
+
+###10. Use PCS
+
+Lets choose the first 50, based on the plot.
+
+```{r use_pcs, warning=FALSE,error=FALSE,message=FALSE}
+use.pcs = 1:50
+```
+
+###11. Produce clusters and visualize with Umap
+
+```{r find_neighbors, warning=FALSE,error=FALSE,message=FALSE}
+experiment.aggregate <- FindNeighbors(experiment.aggregate, reduction="pca", dims = use.pcs)
+
+experiment.aggregate <- FindClusters(
+    object = experiment.aggregate,
+    resolution = seq(0.25,4,0.5),
+    verbose = FALSE
+)
+```
+
+#### uMAP dimensionality reduction plot.
+
+```{r umap, warning=FALSE,error=FALSE,message=FALSE}
+experiment.aggregate <- RunUMAP(
+  object = experiment.aggregate,
+  dims = use.pcs)
+```
+
+
+```{r tsne_all_1, warning=FALSE,error=FALSE,message=FALSE, fig.height=10}
+DimPlot(object = experiment.aggregate, group.by=grep("res",colnames(experiment.aggregate@meta.data),value = TRUE)[1:4], ncol=2 , pt.size=2.0, reduction = "umap", label = T)
+```
+
+```{r tsne_all_2, warning=FALSE,error=FALSE,message=FALSE, fig.height=10}
+DimPlot(object = experiment.aggregate, group.by=grep("res",colnames(experiment.aggregate@meta.data),value = TRUE)[5:8], ncol=2 , pt.size=2.0, reduction = "umap", label = T)
+```
+
+**Which resolution should be choose?**
+
+**Explore the object**
+
+```{r setIdent, warning=FALSE,error=FALSE,message=FALSE}
+Idents(experiment.aggregate) <- "RNA_snn_res.0.75"
+```
+
+
+```{r plot_ident, warning=FALSE, error=FALSE, message=FALSE}
+DimPlot(object = experiment.aggregate, pt.size=0.5, reduction = "umap", label = T)
+```
+
+
+
+## Next lets add  B cell clonetype information
+
+###1. Load the Cell Ranger VDJ Data
+```{r load_data_vdj, warning=FALSE,error=FALSE, message=FALSE}
+vdj.data <- lapply(ids, function(i){
+  vdjx <- read.csv(file.path(dataset_loc,paste0(i,"_VDJ/outs"),"filtered_contig_annotations.csv"))
+  vdjx$barcode <- paste(sapply(strsplit(vdjx$barcode,split="-"),'[[',1L),i,sep="-")
+  vdjx
+})
+names(vdj.data) <- ids
+
+vdj.combined <- combineBCR(vdj.data,samples = ids, ID=c("B","B"))
+vdj.combined <- lapply(vdj.combined, function(x) {x$barcode <- sapply(strsplit(x$barcode,split="_"),"[[", 3L); x })
+head(vdj.combined[[1]])
+```
+
+```{r visualize_quants}
+quantContig(vdj.combined, cloneCall="aa", scale = TRUE)
+?quantContig
+
+abundanceContig(vdj.combined, cloneCall = "aa", scale = FALSE)
+
+lengthContig(vdj.combined, cloneCall="aa", chains = "combined") 
+
+lengthContig(vdj.combined, cloneCall="aa", chains = "single") 
 ```
 
 
 ```{r}
-s_balbc_pbmc <- subset(s_balbc_pbmc, percent.mito <= 10)
+vizVgenes(vdj.combined, TCR="TCR1", facet.x = "sample", facet.y = "ID")
+```
 
-s_balbc_pbmc <- subset(s_balbc_pbmc, nCount_RNA >= 500 & nCount_RNA <= 40000)
+```{r}
+clonalHomeostasis(vdj.combined, cloneCall = "gene")
+clonalHomeostasis(vdj.combined, cloneCall = "aa")
+```
 
-s_balbc_pbmc
+```{r}
+clonalProportion(vdj.combined, cloneCall = "gene") 
+clonalProportion(vdj.combined, cloneCall = "nt") 
 ```
 
 
 ```{r}
-s_balbc_pbmc <- NormalizeData(s_balbc_pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
-s_balbc_pbmc <- FindVariableFeatures(s_balbc_pbmc, selection.method = "vst", nfeatures = 2000)
-
-all.genes <- rownames(s_balbc_pbmc)
-s_balbc_pbmc <- ScaleData(s_balbc_pbmc, features = all.genes)
-s_balbc_pbmc <- RunPCA(s_balbc_pbmc, features = VariableFeatures(object = s_balbc_pbmc))
-use.pcs = 1:30
-s_balbc_pbmc <- FindNeighbors(s_balbc_pbmc, dims = use.pcs)
-s_balbc_pbmc <- FindClusters(s_balbc_pbmc, resolution = c(0.5))
-s_balbc_pbmc <- RunUMAP(s_balbc_pbmc, dims = use.pcs)
-DimPlot(s_balbc_pbmc, reduction = "umap", label = TRUE)
-```
-
-Lets look at T-cell and B-cell markers
-```{r}
-t_cell_markers <- c("Cd3d","Cd3e")
-FeaturePlot(s_balbc_pbmc, features = t_cell_markers)
-table(!is.na(s_balbc_pbmc$t_clonotype_id),s_balbc_pbmc$seurat_clusters)
-t_cells <- c("1","5","6")
-```
-Lets look at T-cell and B-cell markers
-```{r}
-t_cell_markers <- c("Cd3d","Cd3e")
-FeaturePlot(s_balbc_pbmc, features = t_cell_markers)
-table(!is.na(s_balbc_pbmc$t_clonotype_id),s_balbc_pbmc$seurat_clusters)
-t_cells <- c("1","5","6")
+clonalDiversity(vdj.combined, cloneCall = "gene", group = "samples")
 ```
 
 
 ```{r}
-b_cell_markers <- c("Cd79a","Cd79b")
-FeaturePlot(s_balbc_pbmc, features = b_cell_markers)
-table(!is.na(s_balbc_pbmc$b_clonotype_id),s_balbc_pbmc$seurat_clusters)
-b_cells <- c("0","2","3","4","12","13")
+experiment.aggregate <- combineExpression(vdj.combined, experiment.aggregate, cloneCall="gene")
+```
 
+
+```{r}
+b_cell_markers <- c("CD79A","CD79B")
+FeaturePlot(experiment.aggregate, features = b_cell_markers)
+table(!is.na(experiment.aggregate$CTgene),experiment.aggregate$RNA_snn_res.0.75)
+b_cells <- c("4")
+table(experiment.aggregate$cloneType,experiment.aggregate$RNA_snn_res.0.75)
 ```
 
 ```{r}
-markers_all = FindAllMarkers(s_balbc_pbmc,genes.use = VariableFeatures(s_balbc_pbmc),
-    only.pos = TRUE, 
-    min.pct = 0.25, 
-    thresh.use = 0.25)
+table <- table(experiment.aggregate$cloneType, Idents(experiment.aggregate))
 
-dim(markers_all)
-head(markers_all)
-table(table(markers_all$gene))
+table[1,] <- table[1,]/sum(table[1,]) #Scaling by the total number of peripheral B cells
+table[2,] <- table[2,]/sum(table[2,]) #Scaling by the total number of tumor B cells
+table <- as.data.frame(table)
 
-markers_all_single <- markers_all[markers_all$gene %in% names(table(markers_all$gene))[table(markers_all$gene) == 1],]
+ggplot(table, aes(x=Var2, y=Freq, fill=Var1)) + 
+  geom_bar(stat="identity", position="fill", color="black", lwd=0.25) + 
+  theme(axis.title.x = element_blank()) + 
+scale_fill_manual(values = c("#FF4B20","#0348A6")) + 
+  theme_classic() + 
+    theme(axis.title = element_blank()) + 
+    guides(fill=FALSE)
 
-dim(markers_all_single)
-table(table(markers_all_single$gene))
+experiment.aggregate$cloneType <- factor(experiment.aggregate$cloneType, 
+                levels = c("Hyperexpanded (100 < X <= 500)", "Large (20 < X <= 100)", 
+                            "Medium (5 < X <= 20)", "Small (1 < X <= 5)", 
+                            "Single (0 < X <= 1)", NA))
 
-table(markers_all_single$cluster)
+DimPlot(experiment.aggregate, group.by = "cloneType")
 
-head(markers_all_single)
+seurat <- highlightClonotypes(experiment.aggregate, cloneCall= "aa", 
+                sequence = c("CARGPSLLWFGEEGYW_CQQANSFPLTF", "NA_CGTWDSGLSGLVF"))
+DimPlot(seurat, group.by = "highlight")
+
+
+
+occupiedscRepertoire(experiment.aggregate, x.axis = "cluster")
 ```
 
-Plot a heatmap of genes by cluster for the top 5 marker genes per cluster
-```{r}
-library(dplyr)
-top5 <- markers_all_single %>% group_by(cluster) %>% top_n(5, avg_logFC)
-dim(top5)
-DoHeatmap(
-    object = s_balbc_pbmc, 
-    features = top5$gene
-) 
+
+```{r circos}
+library(circlize)
+library(scales)
+
+circles <- getCirclize(experiment.aggregate, cloneCall = "gene+nt", groupBy = "orig.ident" )
+
+#Just assigning the normal colors to each cluster
+grid.cols <- hue_pal()(length(unique(seurat$orig.ident)))
+names(grid.cols) <- levels(seurat$orig.ident)
+
+#Graphing the chord diagram
+chordDiagram(circles, self.link = 1, grid.col = grid.cols)
+
+data_to_circlize <- experiment.aggregate[[]][experiment.aggregate$RNA_snn_res.0.75 %in% b_cells & !is.na(experiment.aggregate$CTgene),]
+dim(data_to_circlize)
+head(data_to_circlize)
+
+aa_seqs <- strsplit(as.character(unlist(data_to_circlize$CTaa)),split="_")
+table(sapply(aa_seqs, length))
+data_to_circlize$A_chain = sapply(aa_seqs, "[[", 1L)
+data_to_circlize$B_chain = sapply(aa_seqs, "[[", 2L)
+
+data_to_circlize$IGH = sapply(strsplit(data_to_circlize$CTstrict, split="_"), function(x) paste(unique(x[c(1)]),collapse="_"))
+data_to_circlize$IGL = sapply(strsplit(data_to_circlize$CTstrict, split="_"), function(x) paste(unique(x[c(3)]),collapse="_"))
+                              
+# get optimal sequence order from trivial plot
+chordDiagram(data.frame(data_to_circlize$A_chain[1:25], data_to_circlize$B_chain[1:25], times = 1))
+seq.order <- get.all.sector.index()
+circos.clear()
+
 ```
 
-## Finally, save the object
-```{r}
-## Original dataset in Seurat class, with no filtering
-save(s_balbc_pbmc,file="VDJ_object.RData")
-```
 
 ## Session Information
 ```{r}
