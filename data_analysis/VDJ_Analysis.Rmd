@@ -6,22 +6,28 @@ output:
       keep_md: TRUE
 ---
 
+Last Updated March 25, 2021
+
 # Single Cell V(D)J Analysis with Seurat and some custom code!
 
 [Seurat](http://satijalab.org/seurat/) is a popular R package that is designed for QC, analysis, and exploration of single cell data. Seurat aims to enable users to identify and interpret sources of heterogeneity from single cell transcriptomic measurements, and to integrate diverse types of single cell data. Further, the authors provide several [tutorials](https://satijalab.org/seurat/vignettes.html) on their website.
 
+
 We start with loading needed libraries for R
+
+**Matt says we don't need all the libraries**
+
 ```{r, warning=FALSE,error=FALSE,message=FALSE}
 library(Seurat)
 library(ggplot2)
 library(knitr)
+# I like this package
 library(kableExtra)
 library(cowplot)
 library(dplyr)
 library(circlize)
 library(scales)
 library(scRepertoire)
-
 ```
 
 ## Load the Expression Matrix Data and create the combined base Seurat object.
@@ -34,6 +40,7 @@ Seurat provides a function `Read10X` to read in 10X data folder. First we read i
 experiment_name = "Covid VDJ Example"
 dataset_loc <- "./advsinglecellvdj_March2021"
 ids <- c("T021PBMC", "T022PBMC")
+ids
 ```
 
 ###1. Load the Cell Ranger Matrix Data (hdf5 file) and create the base Seurat object.
@@ -43,6 +50,7 @@ d10x.data <- lapply(ids, function(i){
   colnames(d10x) <- paste(sapply(strsplit(colnames(d10x),split="-"),'[[',1L),i,sep="-")
   d10x
 })
+
 names(d10x.data) <- ids
 ```
 
@@ -284,7 +292,7 @@ vdj.data <- lapply(ids, function(i){
 })
 names(vdj.data) <- ids
 
-vdj.combined <- combineBCR(vdj.data,samples = ids, ID=c("B","B"))
+vdj.combined <- combineBCR(vdj.data,samples = ids, ID=c("B","B"),)
 vdj.combined <- lapply(vdj.combined, function(x) {x$barcode <- sapply(strsplit(x$barcode,split="_"),"[[", 3L); x })
 head(vdj.combined[[1]])
 ```
@@ -293,11 +301,13 @@ head(vdj.combined[[1]])
 quantContig(vdj.combined, cloneCall="aa", scale = TRUE)
 ?quantContig
 
-abundanceContig(vdj.combined, cloneCall = "aa", scale = FALSE)
+abundanceContig(vdj.combined, cloneCall = "gene", scale = FALSE)
 
-lengthContig(vdj.combined, cloneCall="aa", chains = "combined") 
+lengthContig(vdj.combined, cloneCall="nt", scale=TRUE, chains = "combined", group="sample") 
 
 lengthContig(vdj.combined, cloneCall="aa", chains = "single") 
+head(vdj.combined[[1]])
+
 ```
 
 
@@ -306,7 +316,7 @@ vizVgenes(vdj.combined, TCR="TCR1", facet.x = "sample", facet.y = "ID")
 ```
 
 ```{r}
-clonalHomeostasis(vdj.combined, cloneCall = "gene")
+clonalHomeostasis(vdj.combined, cloneCall = "gene+nt")
 clonalHomeostasis(vdj.combined, cloneCall = "aa")
 ```
 
@@ -317,12 +327,18 @@ clonalProportion(vdj.combined, cloneCall = "nt")
 
 
 ```{r}
-clonalDiversity(vdj.combined, cloneCall = "gene", group = "samples")
+clonalDiversity(vdj.combined, cloneCall = "aa", group = "samples")
 ```
 
 
 ```{r}
 experiment.aggregate <- combineExpression(vdj.combined, experiment.aggregate, cloneCall="gene")
+head(experiment.aggregate[[]])
+```
+
+```{r}
+b_cell_markers <- c("CD3G", "CD3E")
+FeaturePlot(experiment.aggregate, features = b_cell_markers)
 ```
 
 
@@ -330,8 +346,21 @@ experiment.aggregate <- combineExpression(vdj.combined, experiment.aggregate, cl
 b_cell_markers <- c("CD79A","CD79B")
 FeaturePlot(experiment.aggregate, features = b_cell_markers)
 table(!is.na(experiment.aggregate$CTgene),experiment.aggregate$RNA_snn_res.0.75)
-b_cells <- c("4")
+b_cells <- c("6","16")
 table(experiment.aggregate$cloneType,experiment.aggregate$RNA_snn_res.0.75)
+
+DimPlot(experiment.aggregate, group.by = "cloneType")
+
+
+## find the markers associated with the Clonotypes that contain IGHV1
+experiment.aggregate$cells_of_interest <- FALSE
+experiment.aggregate$cells_of_interest[grep("IGHV1", experiment.aggregate$CTstrict)] <- TRUE
+table(experiment.aggregate$cells_of_interest)
+Idents(experiment.aggregate) <- experiment.aggregate$cells_of_interest
+DimPlot(experiment.aggregate)
+FM <-FindMarkers(experiment.aggregate, ident.1 = "TRUE")
+
+
 ```
 
 ```{r}
@@ -367,7 +396,6 @@ occupiedscRepertoire(experiment.aggregate, x.axis = "cluster")
 
 
 ```{r circos}
-
 circles <- getCirclize(experiment.aggregate, cloneCall = "gene+nt", groupBy = "orig.ident" )
 
 #Just assigning the normal colors to each cluster
@@ -390,9 +418,12 @@ data_to_circlize$IGH = sapply(strsplit(data_to_circlize$CTstrict, split="_"), fu
 data_to_circlize$IGL = sapply(strsplit(data_to_circlize$CTstrict, split="_"), function(x) paste(unique(x[c(3)]),collapse="_"))
                               
 # get optimal sequence order from trivial plot
-chordDiagram(data.frame(data_to_circlize$A_chain[1:25], data_to_circlize$B_chain[1:25], times = 1))
+chordDiagram(data.frame(data_to_circlize$IGH[1:15], data_to_circlize$IGL[1:15], times = 1), annotationTrack = "grid" )
 seq.order <- get.all.sector.index()
 circos.clear()
+
+
+#Phylogenetic tree of B cell evolution
 
 ```
 
